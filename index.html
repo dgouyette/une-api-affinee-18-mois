@@ -6,9 +6,11 @@
 
 		<title>reveal.js</title>
 
+		
+
 		<link rel="stylesheet" href="css/reset.css">
 		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+		<link rel="stylesheet" href="css/theme/white.css">
 
 		<!-- Theme used for syntax highlighting of code -->
 		<link rel="stylesheet" href="lib/css/monokai.css">
@@ -25,8 +27,572 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+					<section data-markdown data-background="img/themev2-home.png">
+					# Une API affinée 18 mois
+					Note:
+					* Une API =  Façade de logiciel offrant de services
+					* Versionning et documentation
+					* API Scala +  API REST
+					* Qu'est ce que Refined
+					* Comment utiliser les prédicats Refined et plus des types Scala
+					* Meilleurs messages d'erreurs, 
+					* générer de la documentation  
+				</section>
+
+				<section>
+					<h3>
+							Qui suis-je ? 
+					</h3> 
+					
+					<table>
+						<tr>
+							<td><img src="img/me.jpg"/></td>
+							<td>
+									<ul>
+										<li>
+												Freelance depuis 2011
+										</li>
+										<li>
+												Développeur d'API (SOAP,REST)
+										</li>
+										<li>
+												Développeur scala
+										</li>
+										<li>
+												<em>
+														Fan des macros Scala
+												</em>
+										</li>
+										<li>
+											<i>
+												<del>
+														Moins fan d'écrire de la doc 
+												</del>
+													
+											</i>
+											
+										</li>
+										
+									</ul>
+	
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2" >
+								<a href="https://twitter.com/cestpasdur"><img style="border: 0px;" src="img/twitter-48.png"/> @CestPasDur</a>
+							</td>
+						</tr>
+					</table>
+
+					<aside class="notes">
+							Dans le Passé
+
+							<br/>
+							<br/>beaucoup de temps à écrire du code de validation (Hibernate Validator avec JSF)
+							<br/>
+							Spring Bean validation
+
+							<br/>
+							Tant qu'à écrire de la doc, autant qu'elle soit versionnée avec le code
+				   </aside>
+
+
+				</section>
+				<section>
+					<h3>Il y a la bonne API et la mauvaise API ! </h3>
+					<img src="img/misuse.jpeg" width="60%"/>
+					<aside class="notes">
+						Il doit être difficile de mal s'en servir
+						<br/><br/>
+							Une mauvaise API =  mal typée.
+							<br/><br/>
+							Pour une API scala, des types en entrées, ou de retour incohérents (Future, Option, Either, )
+							<br/><br/>
+							Pour une API REST : des urls, verbes, ou des entités avec des types invalides.
+							<br/><br/>
+							Exemple : API SOAP avec une Map[String,Object] en entrée + de l'introspection
+				   </aside>
+				</section>
+
+				<section data-markdown>
+						### Mauvaise API bancaire ? 
+						```scala
+						def deposit(amount : BigDecimal) = amount match {
+						  case value if value> 0 => Right(AmountDeposited(value))
+						  case _ => Left("invalid amount for deposit")
+						}
+						
+						//tests 
+						deposit(BigDecimal(-100)) mustBe Symbol("left")
+						deposit(BigDecimal(100)) mustBe Right(AmountDeposited(100))
+						```
+						Notes: 
+						Sur celle ci je devrais en plus ajouter des tests unitaires
+
+						<br/><br/>
+						Il faut regarder l'implémentation pour savoir quelles sont les valeurs acceptées
+						<br/><br/>
+						C'est aussi vrai pour les méthodes acceptant un string en entrée alors que l'on souhaite passer, 
+						une url, une IP
+					</section>
+
+					<section data-markdown>
+						### Une solution ?
+
+						```scala
+						import shapeless.tag._
+						import shapeless.tag
+
+						trait Positive
+						type PositiveInt = Int @@ Positive
+
+						def validate(value : PositiveInt) = value match {
+							case v if v <0 => Left(s"Predicate failed $v < 0")
+							case v => Right(v)
+						}
+						
+						validate(tag[PositiveInt](10)) //Right(10)
+						validate(tag[PositiveInt](-10))//Left(Predicate failed -10<0)
+						```
+
+						Notes: 
+
+						Les types en entrée et sortie sont explicites
+						<br/><br/>
+						Il faudra l'implémenter pour tous les types
+						<br/><br/>
+						Ajoute du bruit
+						<br/><br/>
+						Et la validation se fait toujours au runtime
+					</section>
+	
+					<section data-markdown>
+							### refined: simple refinement types
+	
+							~Type~ Refined _Predicate_
+
+							Des erreurs remontées à la compilation
+							```scala
+							scala> val i: Int Refined Positive = -5
+							<console>error: Predicate failed: (-5 > 0).
+							val i: Int Refined Positive = -5
+							                               ^
+							```
+							ou au runtime
+							```scala
+							val j = refineMV[Positive](-5)
+							//j: Either[String, Int Refined Positive] = 
+							//	Left(Predicate failed: (-5 > 0).)
+							```
+	
+							https://github.com/fthomas/refined
+
+							Notes:
+							Un type de base sur lequel on applique un prédicat 
+
+					</section>
+					<section data-markdown>
+							### Prédicats existants : 
+							* _numeric_
+							* string
+							* boolean
+							* char
+							* collection
+							* generic
+							
+					</section>
+
+					<section data-markdown>
+						### Prédicats numériques : 
+
+						* Less[~N~], LessEqual[~N~], Greater[~N~], GreaterEqual[~N~]
+						* Positive, NonPositive, Negative
+						* Divisible[~N~]
+						* Interval.Open[~L~, ~H~]
+						* Even ...
+
+						Notes:
+						N étant un entier naturel  (shapeless)
+
+						On peut simplement créer ses propres prédicats
+
+					</section>
+
+					<section data-markdown>
+						### Inférence sur du code existant
+
+						```scala
+						import eu.timepit.refined.api.Refined
+						import eu.timepit.refined.auto._
+						import eu.timepit.refined.numeric._
+						
+						def plusOne(a: Int Refined Positive) = a + 1
+						
+						plusOne(42) // 43
+						```
+						
+						Notes:
+						Refined fournit également des fonctions de conversion entre les types
+						
+
+						ex N > 10, alors N est également Positif
+					</section>
+	
+					<section data-markdown>
+						### Bonne API bancaire ? 
+						```scala
+						def deposit(amount : BigDecimal Refined Positive) = {
+							AmountDeposited(value)
+						}
+						deposit(BigDecimal(100)) // compile 
+						deposit(BigDecimal(-100)) //Predicate failed: (-100 > 0). 🙌
+						```
+						Notes:
+						Signature explicite
+					</section>
+
+					
+
+					<section data-markdown>
+							### Une bonne API REST
+							 des URIS avec des verbes cohérents :
+							 
+							 _POST /users return 201_
+							
+							 ~~GET createUser return 200~~
+						</section>
+
+
+						<section data-markdown>
+							### Qu'est ce qu'un schéma json
+							
+							```json
+							{
+								"type": "string",
+								"minLength": 2,
+								"maxLength": 3
+							}
+							```
+		
+							```json
+							"street_type": { 
+									"type": "string",  
+									"enum": ["Street", "Avenue", "Boulevard"]
+							}
+							```
+		
+							https://json-schema.org/understanding-json-schema/
+		
+							Notes:
+							Json permet de réprésenter toute sorte de données structurées
+		
+							Vous avez certainement du voir des API json avec des int, booléens sous la forme de "string" 
+		
+							Il existe même une convention pour représenter les énumérations
+							
+							Ressemblance avec les prédicats de Refined ? 
+							
+						</section>	
+					<section data-markdown>
+						### Aller plus loin ? 
+	
+						```scala
+						def deposit(amount : BigDecimal Refined Positive) = {
+							AmountDeposited(value)
+						}
+						```
+						1. Enrichir les messages d'erreurs
+						2. Fournir une documentation 
+	
+						Notes:
+						1 et 2 se basent sur un schéma json
+					</section>
+
+				
+
+				<section data-markdown>
+						 ### Une API bien documentée
+						 ![open API](img/openapi-example.png)
+					</section>
+
+				
+
+
+				<section data-markdown>
+						### Des messages d'erreurs explicites
+
+						```bash
+						curl -X POST http://localhost:9000/login
+							-d '{"username" : "john.doe@yopmail.com", 
+								"password" : ""}'
+						```
+
+						```json
+						{
+							"obj.email":[
+							   {"msg":["error.path.missing"]}
+							],
+							"obj.password":[
+							   {"msg":["Predicate isEmpty() did not fail."]}
+							]
+						 }
+						```
+				</section>
+
+				<section data-markdown>
+						### Des messages d'erreurs encore plus explicites
+
+						```bash
+						curl -X POST http://localhost:9000/login
+							-d '{"username" : "john.doe@yopmail.com", 
+								"password" : ""}'
+						```
+
+						```json
+						{
+							"_schema": {
+								"email": {
+									"minLength": 1,
+									"type": "string"
+								},
+								"password": {
+									"minLength": 1,
+									"type": "string"
+								}
+							},
+							...
+						 }
+						```
+				</section>
+
+					
+			
+
+				
+
+				
+
+				
+
+				<section data-markdown>
+						### play-api-refiner
+	
+						```scala
+						resolvers += Resolver.bintrayRepo("dgouyette", "maven")
+
+						libraryDependencies += 
+							"org.dgouyette"%% "play-api-refiner"% "1.0.0-M1"
+						```
+						* Schéma json
+						* Enrichi les messages d'erreurs Play
+						* Documentation Swagger
+						* License Apache 2
+	
+						https://github.com/dgouyette/play-api-refiner
+
+						Notes:
+						Basée sur les types & prédicats : 
+
+						Version scala 2.13 (avec compilation intégrée) `-Ymacro-annotations`
+
+						Il existe aussi play-json-refined mais ne fournit que des formatteurs json play
+					</section>
+				
+				<section data-markdown>
+					#### Type primitif 1/2
+					```scala
+					case class SimpleString(value : String)
+					JsonSchema.jsonSchema[SimpleString]
+					```
+
+					```json
+					{
+						"value" : {
+							"type" : "string"
+						}
+					}
+					```
+				</section>
+
+				
+
+				
+				<section data-markdown>
+					#### Prédicats Refined 1/2
+					```scala
+					case class StringNonEmpty(value : String Refined NonEmpty)
+					JsonSchema.jsonSchema[StringNonEmpty]
+					```
+
+					```json
+					{
+						"value":{
+							"minLength":1,
+							"type":"string"
+						}
+					}
+					```
+				</section>
+
+				<section data-markdown>
+						#### Prédicats Refined 2/2
+						```scala
+						case class CollectionIntNonEmpty(
+							value : List[Int] Refined NonEmpty)
+
+						JsonSchema.jsonSchema[CollectionIntNonEmpty]
+						```
+	
+						```json
+						{
+							"value":{
+									"minLength":1,
+									"type":"array",
+									"items":{
+										"type":"integer"
+									}
+								}
+						}
+						```
+					</section>
+
+				<section data-markdown>
+					#### sealed trait
+					```scala
+					sealed trait TrafficLight
+					case object Red extends TrafficLight
+					case object Orange extends TrafficLight
+					case object Green extends TrafficLight
+					case class SimpleEnum(e : TrafficLight)
+
+					JsonSchema.jsonSchema[SimpleEnum] 
+					  ```
+					  
+					  ```json
+					  {
+						  "e":{
+						  	"enum":["red","orange","green"],
+						  	"type":"string"
+							}
+						}
+					  ```
+				</section>
+				<section data-markdown>
+					#### Json schéma  : Comment ça marche ?  1/2
+					Utilisation de la macro
+					```scala
+					case class Login(email : String Refined NonEmpty)
+					JsonSchema.asJsValue[SimpleString]
+					//{"email":{"minLength":1,"type":"string"}}
+					```
+
+					```scala	
+					object JsonSchema {
+						def asJsValue[T]: JsValue = macro impl[T]
+						def impl[T: c.WeakTypeTag] = {
+							typeOf[T] // type de la classe  = Login
+							.decls.collect {
+								//champs =  List(email)
+								case m: MethodSymbol if m.isCaseAccessor => 
+								m.name // email
+								//eu.timepit.refined.api.Refined[T,P]
+								m.info.typeSymbol
+
+							//typeArgs=List(String,refined.collection.NonEmpty)
+								m.info.typeArgs
+								
+							}
+						}
+					}
+					```
+
+					Notes:
+					Les macros permettent d'effectuer des traitements à la compilation
+
+					WeakTypeTag + typeOf permet d'extraire et d'utiliser le type passé à la macro
+				</section>
+
+				<section data-markdown>
+					#### Json schéma  : Comment ça marche ?  2/2
+					
+					```scala
+					def extractArgs(typeArgs: Seq[Type])=typeArgs match {
+						case _refinedType :: _type :: _predicate :: Nil => 
+							extractArgs(List(_refinedType)) ++ 
+							extractArgs(List(_type)) ++ 
+							extractArgs(List(_predicate))
+			
+						case _type :: Nil if _type =:= typeOf[String] => 
+							Json.obj("type" -> "string")
+						
+						case _predicate :: Nil if _predicate =:= typeOf[NonEmpty] => 
+						Json.obj("minLength" -> 1)
+					}
+			  
+					```
+
+					
+				</section>
+				<section data-markdown>
+					#### Open API : Comment ça marche ?
+					```scala
+					case class Login(email  : String Refined NonEmpty,
+									  password : String Refined NonEmpty)
+
+					val loginFmt = Json.format[Login]
+					val loginSchema = JsonSchema.asJsValue[Login]
+
+							   //Action[Login]
+					def login()=Action(bp.jsonRefined(loginFmt, loginSchema)) {
+							implicit request => Ok
+					}
+					  ```
+
+					  ```scala
+					  POST        /login    controllers.HomeController.login
+					  ```
+					  Notes:
+					  De quelles informations avons nous besoin ?
+
+					  On parse le route file de play en utilisant le play route compiler
+				</section>
+
+			
+				<section data-markdown>
+					### Validation au runtime
+
+					```scala
+					implicit def refinedR[T,P](
+									implicit readsT : Reads[T], 
+									v : Validate[T,P]) : Reads[T Refined P] = 
+					(json: JsValue) => {
+					readsT
+						.reads(json)
+						.flatMap { t: T =>
+							refineV[P](t) match {//validation refined au runtime
+								case Left(error) => JsError(error)
+								case Right(value) => JsSuccess(value)
+							}
+						}
+					}
+					```
+					Notes:
+					Fait le pont entre les annotation à la compilation et au runtime
+
+				</section>
+
+				<section data-markdown>
+					### En synthèse
+
+				</section>
+				<section>
+				<h1>Questions</h1>
+				<img width="30%" src="img/questions.jpg"/>
+
+				</section>
+				
+
+
 			</div>
 		</div>
 
@@ -44,6 +610,11 @@
 					{ src: 'plugin/highlight/highlight.js', async: true }
 				]
 			});
+			Reveal.configure({ 	hash: true,        
+								slideNumber: true,
+								showNotes:  false//"separate-page"
+							});
+
 		</script>
 	</body>
 </html>
