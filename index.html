@@ -27,7 +27,7 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-					<section data-markdown data-background="img/themev2-home.png">
+					<section data-markdown data-background="img/themev3-home.png">
 					# Une API affinée 18 mois
 					Note:
 					* Une API =  Façade de logiciel offrant de services
@@ -39,7 +39,7 @@
 					* générer de la documentation  
 				</section>
 
-				<section>
+				<section data-background="img/themev2.png">
 					<h3>
 							Qui suis-je ? 
 					</h3> 
@@ -56,7 +56,7 @@
 												Développeur d'API (SOAP,REST)
 										</li>
 										<li>
-												Développeur scala
+												Développeur Scala
 										</li>
 										<li>
 												<em>
@@ -93,12 +93,16 @@
 							Spring Bean validation
 
 							<br/>
-							Tant qu'à écrire de la doc, autant qu'elle soit versionnée avec le code
+							<br/>
+
+							Tant qu'à écrire de la doc, autant qu'elle soit versionnée avec le code voire générée
+							<br/>
+							Encore mieux si elle est exécutable
 				   </aside>
 
 
 				</section>
-				<section>
+				<section data-background="img/themev2.png">
 					<h3>Il y a la bonne API et la mauvaise API ! </h3>
 					<img src="img/misuse.jpeg" width="60%"/>
 					<aside class="notes">
@@ -106,7 +110,7 @@
 						<br/><br/>
 							Une mauvaise API =  mal typée.
 							<br/><br/>
-							Pour une API scala, des types en entrées, ou de retour incohérents (Future, Option, Either, )
+							Pour une API Scala, des types en entrées, ou de retour incohérents (Future, Option, Either, )
 							<br/><br/>
 							Pour une API REST : des urls, verbes, ou des entités avec des types invalides.
 							<br/><br/>
@@ -114,7 +118,7 @@
 				   </aside>
 				</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						### Mauvaise API bancaire ? 
 						```scala
 						def deposit(amount : BigDecimal) = amount match {
@@ -136,7 +140,7 @@
 						une url, une IP
 					</section>
 
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 						### Une solution ?
 
 						```scala
@@ -191,7 +195,7 @@
 							Un type de base sur lequel on applique un prédicat 
 
 					</section>
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 							### Prédicats existants : 
 							* _numeric_
 							* string
@@ -202,7 +206,7 @@
 							
 					</section>
 
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 						### Prédicats numériques : 
 
 						* Less[~N~], LessEqual[~N~], Greater[~N~], GreaterEqual[~N~]
@@ -218,7 +222,7 @@
 
 					</section>
 
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 						### Inférence sur du code existant
 
 						```scala
@@ -238,8 +242,8 @@
 						ex N > 10, alors N est également Positif
 					</section>
 	
-					<section data-markdown>
-						### Bonne API bancaire ? 
+					<section data-markdown data-background="img/themev2.png">
+						### Bonne API ? 
 						```scala
 						def deposit(amount : BigDecimal Refined Positive) = {
 							AmountDeposited(value)
@@ -253,7 +257,7 @@
 
 					
 
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 							### Une bonne API REST
 							 des URIS avec des verbes cohérents :
 							 
@@ -263,7 +267,7 @@
 						</section>
 
 
-						<section data-markdown>
+						<section data-markdown data-background="img/themev2.png">
 							### Qu'est ce qu'un schéma json
 							
 							```json
@@ -293,7 +297,7 @@
 							Ressemblance avec les prédicats de Refined ? 
 							
 						</section>	
-					<section data-markdown>
+					<section data-markdown data-background="img/themev2.png">
 						### Aller plus loin ? 
 	
 						```scala
@@ -310,7 +314,7 @@
 
 				
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						 ### Une API bien documentée
 						 ![open API](img/openapi-example.png)
 					</section>
@@ -318,7 +322,7 @@
 				
 
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						### Des messages d'erreurs explicites
 
 						```bash
@@ -339,7 +343,7 @@
 						```
 				</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						### Des messages d'erreurs encore plus explicites
 
 						```bash
@@ -374,7 +378,7 @@
 
 				
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						### play-api-refiner
 	
 						```scala
@@ -393,12 +397,14 @@
 						Notes:
 						Basée sur les types & prédicats : 
 
-						Version scala 2.13 (avec compilation intégrée) `-Ymacro-annotations`
-
+						Version scala 2.13  `-Ymacro-annotations`
+						
 						Il existe aussi play-json-refined mais ne fournit que des formatteurs json play
+						<br/>
+
 					</section>
 				
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### Type primitif 1/2
 					```scala
 					case class SimpleString(value : String)
@@ -417,7 +423,7 @@
 				
 
 				
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### Prédicats Refined 1/2
 					```scala
 					case class StringNonEmpty(value : String Refined NonEmpty)
@@ -434,7 +440,7 @@
 					```
 				</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 						#### Prédicats Refined 2/2
 						```scala
 						case class CollectionIntNonEmpty(
@@ -456,7 +462,7 @@
 						```
 					</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### sealed trait
 					```scala
 					sealed trait TrafficLight
@@ -477,9 +483,8 @@
 						}
 					  ```
 				</section>
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### Json schéma  : Comment ça marche ?  1/2
-					Utilisation de la macro
 					```scala
 					case class Login(email : String Refined NonEmpty)
 					JsonSchema.asJsValue[SimpleString]
@@ -512,7 +517,7 @@
 					WeakTypeTag + typeOf permet d'extraire et d'utiliser le type passé à la macro
 				</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### Json schéma  : Comment ça marche ?  2/2
 					
 					```scala
@@ -533,7 +538,7 @@
 
 					
 				</section>
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					#### Open API : Comment ça marche ?
 					```scala
 					case class Login(email  : String Refined NonEmpty,
@@ -558,7 +563,7 @@
 				</section>
 
 			
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					### Validation au runtime
 
 					```scala
@@ -581,11 +586,11 @@
 
 				</section>
 
-				<section data-markdown>
+				<section data-markdown data-background="img/themev2.png">
 					### En synthèse
 
 				</section>
-				<section>
+				<section data-background="img/themev2.png">
 				<h1>Questions</h1>
 				<img width="30%" src="img/questions.jpg"/>
 
